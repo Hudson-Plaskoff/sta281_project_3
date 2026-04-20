@@ -1,0 +1,12 @@
+---
+title: "Project3"
+author: "Alex Jones and Hudson Plaskoff"
+date: "2026-05-01"
+output:
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
