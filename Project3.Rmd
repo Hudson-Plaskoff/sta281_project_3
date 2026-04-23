@@ -103,6 +103,13 @@ stock_close_month <- stock_close %>%
     .before = year
   )
 
+stock_close_month_pivoted <- stock_close_month %>%
+  pivot_longer(
+    cols = HD:OC,
+    names_to = "stock",
+    values_to = "price"
+  )
+
 knitr::kable(stock_close_month %>% head())
 ```
 
@@ -136,7 +143,46 @@ fred_data <- ppi_construction %>%
   left_join(new_private_units) %>%
   left_join(new_family_homes_sold)
 
+fred_data_pivoted <- fred_data %>%
+  pivot_longer(
+    cols = ppi_construction:new_family_homes_sold,
+    names_to = "economic_metric",
+    values_to = "value"
+  )
+
 knitr::kable(fred_data %>% head())
 ```
 
 The data import for the FRED data was simpler than the data import for the stocks. This was due largely to the option on the FRED website to download CSVs for each of the economic variables, which we then imported into R. This process was also helped by the date variable in each of these datasets being formatted as date data and also being set to the first of the month for each respective observation.
+
+# Exploratory Data Analysis
+## Stock Prices
+```{r}
+ggplot(stock_close_month_pivoted,aes(x=date,y=price,color=stock)) +
+  geom_line()
+```
+
+## Economic Data
+### PPI (Construction Materials)
+```{r}
+ggplot(fred_data,aes(x=observation_date,y=ppi_construction)) +
+  geom_line()
+```
+
+### Residential Construction Spending
+```{r}
+ggplot(fred_data,aes(x=observation_date,y=construction_spending)) +
+  geom_line()
+```
+
+### New Private Housing Units
+```{r}
+ggplot(fred_data,aes(x=observation_date,y=new_private_units)) +
+  geom_line()
+```
+
+### New One Family Homes Sold
+```{r}
+ggplot(fred_data,aes(x=observation_date,y=new_family_homes_sold)) +
+  geom_line()
+```
