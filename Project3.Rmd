@@ -9,4 +9,134 @@ output:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(reticulate)
+library(tidyverse)
+library(knitr)
+use_virtualenv("~/.virtualenvs/r-reticulate",required=TRUE)
 ```
+
+# Introduction
+
+For this project, we decided to examine potential relationships between the stock prices of companies with close ties to the US housing market and economic indicators based on trends in home construction and sales.
+
+The companies we chose to look at are some of the largest publicly traded firms that are related to the housing market. They are listed below, along with their corresponding industry:^[According to [Finviz](https://finviz.com/)]
+
+* HD - Home Depot (Home Improvement Retail)
+
+* LOW - Lowe's (Home Improvement Retail)
+
+* DHI - D. R. Horton (Residential Construction)
+
+* PHM - PulteGroup (Residential Construction)
+
+* LEN - Lennar (Residential Construction)
+
+* MAS - Masco (Building Products & Equipment)
+
+* BLDR - Builders Firstsource (Building Products & Equipment)
+
+* OC - Owens Corning (Building Products & Equipment)
+
+We decided to only look at data from January 1, 2007 and later due to not all of our selected companies being publicly traded for much of the previous year. To do this, we used Python to import stock data for selected companies that are related to the US housing market. We also imported the following datasets from FRED (Federal Reserve Economic Data) from the Federal Reserve Bank of St. Louis:
+
+* [Producer Price Index by Commodity: Special Indexes: Construction Materials](https://fred.stlouisfed.org/series/WPUSI012011)
+  * Measures the relative cost of construction materials
+* [Total Construction Spending: Residential in the United States](https://fred.stlouisfed.org/series/TLRESCONS)
+  * Measures total construction spending (in millions of $) by companies that build residential buildings
+* [New Privately-Owned Housing Units Started: Total Units](https://fred.stlouisfed.org/series/HOUST)
+  * Measures the total number of new homes (in thousands) starting to be constructed
+* [New One Family Houses Sold: United States](https://fred.stlouisfed.org/series/HSN1F)
+  * Measures the total number of new one family homes sold (in thousands) 
+
+We don't anticipate that we will use all of these datasets, but we believe that it would be beneficial to have them imported and ready to use in case we needed one of them that we hadn't anticipated using. 
+
+Across all of the FRED datasets, the sample size is 228, which in this context of monthly observations means the data is from a 228 month (19 year) period of time. The sample size for the stock data across all of the stocks chosen is also 228, meaning it is also across 228 months (or 19 years) in the same period of time as the FRED data.
+
+# Data Import
+## Stock Data from Python (yfinance)
+```{python}
+import yfinance as yf
+import pandas as pd
+
+tickers = ["HD","LOW","DHI","PHM","LEN","MAS","BLDR","OC"]
+start = "2007-01-01"
+end = "2025-12-31"
+
+stock_data = yf.download(tickers,start=start,end=end)
+stock_close = stock_data["Close"]
+```
+
+```{r}
+stock_close <- py$stock_close
+
+stock_close <- stock_close %>%
+  mutate(
+    date = rownames(stock_close)
+  ) %>%
+  mutate(
+    date = ymd_hms(date)
+  ) %>%
+  mutate(
+     year = year(date),
+     month = month(date),
+     mday = day(date)
+  )
+
+stock_close_month <- stock_close %>%
+  group_by(year,month) %>%
+  summarize(
+    HD = mean(HD),
+    LOW = mean(LOW),
+    DHI = mean(DHI),
+    PHM = mean(PHM),
+    LEN = mean(LEN),
+    MAS = mean(MAS),
+    BLDR = mean(BLDR),
+    OC = mean(OC)
+  ) %>%
+  mutate(
+    day = 1,
+    .after = month
+  ) %>%
+  mutate(
+    date = make_date(year,month,day),
+    .before = year
+  )
+
+knitr::kable(stock_close_month %>% head())
+```
+
+We used the yfinance library in Python to easily access stock data from Yahoo Finance for our selected companies in the date range we indicated (January 2007 to December 2025). We then imported the created dataset into R and generated a mean closing price for each month, which was then assigned to be the first of each respective month so it could be more easily joined to datasets from FRED, which also assign the day as one for a given month's data.
+
+## Economic Data from FRED
+
+```{r}
+ppi_construction <- read_csv("WPUSI012011.csv") %>%
+  rename(
+    ppi_construction = WPUSI012011
+  )
+
+construction_spending <- read_csv("TLRESCONS.csv") %>%
+  rename(
+    construction_spending = TLRESCONS
+  )
+
+new_private_units <- read_csv("HOUST.csv") %>%
+  rename(
+    new_private_units = HOUST
+  )
+
+new_family_homes_sold <- read_csv("HSN1F.csv") %>%
+  rename(
+    new_family_homes_sold = HSN1F
+  )
+
+fred_data <- ppi_construction %>%
+  left_join(construction_spending) %>%
+  left_join(new_private_units) %>%
+  left_join(new_family_homes_sold)
+
+knitr::kable(fred_data %>% head())
+```
+
+The data import for the FRED data was simpler than the data import for the stocks. This was due largely to the option on the FRED website to download CSVs for each of the economic variables, which we then imported into R. This process was also helped by the date variable in each of these datasets being formatted as date data and also being set to the first of the month for each respective observation.

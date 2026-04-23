@@ -445,7 +445,378 @@ display: none;
 </div>
 
 
+<div id="introduction" class="section level1">
+<h1>Introduction</h1>
+<p>For this project, we decided to examine potential relationships
+between the stock prices of companies with close ties to the US housing
+market and economic indicators based on trends in home construction and
+sales.</p>
+<p>The companies we chose to look at are some of the largest publicly
+traded firms that are related to the housing market. They are listed
+below, along with their corresponding industry:<a href="#fn1" class="footnote-ref" id="fnref1"><sup>1</sup></a></p>
+<ul>
+<li><p>HD - Home Depot (Home Improvement Retail)</p></li>
+<li><p>LOW - Lowe’s (Home Improvement Retail)</p></li>
+<li><p>DHI - D. R. Horton (Residential Construction)</p></li>
+<li><p>PHM - PulteGroup (Residential Construction)</p></li>
+<li><p>LEN - Lennar (Residential Construction)</p></li>
+<li><p>MAS - Masco (Building Products &amp; Equipment)</p></li>
+<li><p>BLDR - Builders Firstsource (Building Products &amp;
+Equipment)</p></li>
+<li><p>OC - Owens Corning (Building Products &amp; Equipment)</p></li>
+</ul>
+<p>We decided to only look at data from January 1, 2007 and later due to
+not all of our selected companies being publicly traded for much of the
+previous year. To do this, we used Python to import stock data for
+selected companies that are related to the US housing market. We also
+imported the following datasets from FRED (Federal Reserve Economic
+Data) from the Federal Reserve Bank of St. Louis:</p>
+<ul>
+<li><a href="https://fred.stlouisfed.org/series/WPUSI012011">Producer
+Price Index by Commodity: Special Indexes: Construction Materials</a>
+<ul>
+<li>Measures the relative cost of construction materials</li>
+</ul></li>
+<li><a href="https://fred.stlouisfed.org/series/TLRESCONS">Total
+Construction Spending: Residential in the United States</a>
+<ul>
+<li>Measures total construction spending (in millions of $) by companies
+that build residential buildings</li>
+</ul></li>
+<li><a href="https://fred.stlouisfed.org/series/HOUST">New
+Privately-Owned Housing Units Started: Total Units</a>
+<ul>
+<li>Measures the total number of new homes (in thousands) starting to be
+constructed</li>
+</ul></li>
+<li><a href="https://fred.stlouisfed.org/series/HSN1F">New One Family
+Houses Sold: United States</a>
+<ul>
+<li>Measures the total number of new one family homes sold (in
+thousands)</li>
+</ul></li>
+</ul>
+<p>We don’t anticipate that we will use all of these datasets, but we
+believe that it would be beneficial to have them imported and ready to
+use in case we needed one of them that we hadn’t anticipated using.</p>
+<p>Across all of the FRED datasets, the sample size is 228, which in
+this context of monthly observations means the data is from a 228 month
+(19 year) period of time. The sample size for the stock data across all
+of the stocks chosen is also 228, meaning it is also across 228 months
+(or 19 years) in the same period of time as the FRED data.</p>
+</div>
+<div id="data-import" class="section level1">
+<h1>Data Import</h1>
+<div id="stock-data-from-python-yfinance" class="section level2">
+<h2>Stock Data from Python (yfinance)</h2>
+<pre class="python"><code>import yfinance as yf
+import pandas as pd
 
+tickers = [&quot;HD&quot;,&quot;LOW&quot;,&quot;DHI&quot;,&quot;PHM&quot;,&quot;LEN&quot;,&quot;MAS&quot;,&quot;BLDR&quot;,&quot;OC&quot;]
+start = &quot;2007-01-01&quot;
+end = &quot;2025-12-31&quot;
+
+stock_data = yf.download(tickers,start=start,end=end)</code></pre>
+<pre><code>## [                       0%                       ][************          25%                       ]  2 of 8 completed[******************    38%                       ]  3 of 8 completed[**********************50%                       ]  4 of 8 completed[**********************62%*****                  ]  5 of 8 completed[**********************75%***********            ]  6 of 8 completed[**********************88%*****************      ]  7 of 8 completed[*********************100%***********************]  8 of 8 completed</code></pre>
+<pre class="python"><code>stock_close = stock_data[&quot;Close&quot;]</code></pre>
+<pre class="r"><code>stock_close &lt;- py$stock_close
+
+stock_close &lt;- stock_close %&gt;%
+  mutate(
+    date = rownames(stock_close)
+  ) %&gt;%
+  mutate(
+    date = ymd_hms(date)
+  ) %&gt;%
+  mutate(
+     year = year(date),
+     month = month(date),
+     mday = day(date)
+  )
+
+stock_close_month &lt;- stock_close %&gt;%
+  group_by(year,month) %&gt;%
+  summarize(
+    HD = mean(HD),
+    LOW = mean(LOW),
+    DHI = mean(DHI),
+    PHM = mean(PHM),
+    LEN = mean(LEN),
+    MAS = mean(MAS),
+    BLDR = mean(BLDR),
+    OC = mean(OC)
+  ) %&gt;%
+  mutate(
+    day = 1,
+    .after = month
+  ) %&gt;%
+  mutate(
+    date = make_date(year,month,day),
+    .before = year
+  )</code></pre>
+<pre><code>## `summarise()` has grouped output by &#39;year&#39;. You can override using the
+## `.groups` argument.</code></pre>
+<pre class="r"><code>knitr::kable(stock_close_month %&gt;% head())</code></pre>
+<table>
+<colgroup>
+<col width="11%" />
+<col width="5%" />
+<col width="6%" />
+<col width="4%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+<col width="9%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">date</th>
+<th align="right">year</th>
+<th align="right">month</th>
+<th align="right">day</th>
+<th align="right">HD</th>
+<th align="right">LOW</th>
+<th align="right">DHI</th>
+<th align="right">PHM</th>
+<th align="right">LEN</th>
+<th align="right">MAS</th>
+<th align="right">BLDR</th>
+<th align="right">OC</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2007-01-01</td>
+<td align="right">2007</td>
+<td align="right">1</td>
+<td align="right">1</td>
+<td align="right">24.68300</td>
+<td align="right">23.37028</td>
+<td align="right">21.12306</td>
+<td align="right">27.24821</td>
+<td align="right">39.72750</td>
+<td align="right">18.17779</td>
+<td align="right">14.66739</td>
+<td align="right">23.12713</td>
+</tr>
+<tr class="even">
+<td align="left">2007-02-01</td>
+<td align="right">2007</td>
+<td align="right">2</td>
+<td align="right">1</td>
+<td align="right">25.14243</td>
+<td align="right">23.91047</td>
+<td align="right">21.87977</td>
+<td align="right">26.83039</td>
+<td align="right">40.71514</td>
+<td align="right">18.59314</td>
+<td align="right">15.67748</td>
+<td align="right">25.38792</td>
+</tr>
+<tr class="odd">
+<td align="left">2007-03-01</td>
+<td align="right">2007</td>
+<td align="right">3</td>
+<td align="right">1</td>
+<td align="right">23.40291</td>
+<td align="right">22.54805</td>
+<td align="right">18.22042</td>
+<td align="right">22.81712</td>
+<td align="right">35.43932</td>
+<td align="right">16.58338</td>
+<td align="right">14.41387</td>
+<td align="right">25.49823</td>
+</tr>
+<tr class="even">
+<td align="left">2007-04-01</td>
+<td align="right">2007</td>
+<td align="right">4</td>
+<td align="right">1</td>
+<td align="right">23.72223</td>
+<td align="right">22.24777</td>
+<td align="right">17.42129</td>
+<td align="right">22.57954</td>
+<td align="right">33.01320</td>
+<td align="right">16.28417</td>
+<td align="right">14.12552</td>
+<td align="right">26.66170</td>
+</tr>
+<tr class="odd">
+<td align="left">2007-05-01</td>
+<td align="right">2007</td>
+<td align="right">5</td>
+<td align="right">1</td>
+<td align="right">23.90247</td>
+<td align="right">22.41345</td>
+<td align="right">17.94737</td>
+<td align="right">22.16025</td>
+<td align="right">34.34743</td>
+<td align="right">17.83118</td>
+<td align="right">13.69103</td>
+<td align="right">27.73850</td>
+</tr>
+<tr class="even">
+<td align="left">2007-06-01</td>
+<td align="right">2007</td>
+<td align="right">6</td>
+<td align="right">1</td>
+<td align="right">23.98724</td>
+<td align="right">22.47433</td>
+<td align="right">16.75247</td>
+<td align="right">20.57656</td>
+<td align="right">31.93115</td>
+<td align="right">17.12878</td>
+<td align="right">13.79899</td>
+<td align="right">28.60417</td>
+</tr>
+</tbody>
+</table>
+<p>We used the yfinance library in Python to easily access stock data
+from Yahoo Finance for our selected companies in the date range we
+indicated (January 2007 to December 2025). We then imported the created
+dataset into R and generated a mean closing price for each month, which
+was then assigned to be the first of each respective month so it could
+be more easily joined to datasets from FRED, which also assign the day
+as one for a given month’s data.</p>
+</div>
+<div id="economic-data-from-fred" class="section level2">
+<h2>Economic Data from FRED</h2>
+<pre class="r"><code>ppi_construction &lt;- read_csv(&quot;WPUSI012011.csv&quot;) %&gt;%
+  rename(
+    ppi_construction = WPUSI012011
+  )</code></pre>
+<pre><code>## Rows: 228 Columns: 2
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl  (1): WPUSI012011
+## date (1): observation_date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>construction_spending &lt;- read_csv(&quot;TLRESCONS.csv&quot;) %&gt;%
+  rename(
+    construction_spending = TLRESCONS
+  )</code></pre>
+<pre><code>## Rows: 228 Columns: 2
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl  (1): TLRESCONS
+## date (1): observation_date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>new_private_units &lt;- read_csv(&quot;HOUST.csv&quot;) %&gt;%
+  rename(
+    new_private_units = HOUST
+  )</code></pre>
+<pre><code>## Rows: 228 Columns: 2
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl  (1): HOUST
+## date (1): observation_date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>new_family_homes_sold &lt;- read_csv(&quot;HSN1F.csv&quot;) %&gt;%
+  rename(
+    new_family_homes_sold = HSN1F
+  )</code></pre>
+<pre><code>## Rows: 228 Columns: 2
+## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## dbl  (1): HSN1F
+## date (1): observation_date
+## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>fred_data &lt;- ppi_construction %&gt;%
+  left_join(construction_spending) %&gt;%
+  left_join(new_private_units) %&gt;%
+  left_join(new_family_homes_sold)</code></pre>
+<pre><code>## Joining with `by = join_by(observation_date)`
+## Joining with `by = join_by(observation_date)`
+## Joining with `by = join_by(observation_date)`</code></pre>
+<pre class="r"><code>knitr::kable(fred_data %&gt;% head())</code></pre>
+<table>
+<colgroup>
+<col width="17%" />
+<col width="17%" />
+<col width="22%" />
+<col width="18%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="left">observation_date</th>
+<th align="right">ppi_construction</th>
+<th align="right">construction_spending</th>
+<th align="right">new_private_units</th>
+<th align="right">new_family_homes_sold</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">2007-01-01</td>
+<td align="right">181.1</td>
+<td align="right">544096</td>
+<td align="right">1409</td>
+<td align="right">891</td>
+</tr>
+<tr class="even">
+<td align="left">2007-02-01</td>
+<td align="right">181.5</td>
+<td align="right">538260</td>
+<td align="right">1480</td>
+<td align="right">828</td>
+</tr>
+<tr class="odd">
+<td align="left">2007-03-01</td>
+<td align="right">182.5</td>
+<td align="right">534655</td>
+<td align="right">1495</td>
+<td align="right">833</td>
+</tr>
+<tr class="even">
+<td align="left">2007-04-01</td>
+<td align="right">183.7</td>
+<td align="right">530749</td>
+<td align="right">1490</td>
+<td align="right">887</td>
+</tr>
+<tr class="odd">
+<td align="left">2007-05-01</td>
+<td align="right">184.0</td>
+<td align="right">521499</td>
+<td align="right">1415</td>
+<td align="right">842</td>
+</tr>
+<tr class="even">
+<td align="left">2007-06-01</td>
+<td align="right">184.0</td>
+<td align="right">513524</td>
+<td align="right">1448</td>
+<td align="right">793</td>
+</tr>
+</tbody>
+</table>
+<p>The data import for the FRED data was simpler than the data import
+for the stocks. This was due largely to the option on the FRED website
+to download CSVs for each of the economic variables, which we then
+imported into R. This process was also helped by the date variable in
+each of these datasets being formatted as date data and also being set
+to the first of the month for each respective observation.</p>
+</div>
+</div>
+<div class="footnotes footnotes-end-of-document">
+<hr />
+<ol>
+<li id="fn1"><p>According to <a href="https://finviz.com/">Finviz</a><a href="#fnref1" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
 
 
 
