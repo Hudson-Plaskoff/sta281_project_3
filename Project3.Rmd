@@ -141,7 +141,10 @@ new_family_homes_sold <- read_csv("HSN1F.csv") %>%
 fred_data <- ppi_construction %>%
   left_join(construction_spending) %>%
   left_join(new_private_units) %>%
-  left_join(new_family_homes_sold)
+  left_join(new_family_homes_sold) %>%
+  rename(
+    date = observation_date
+  )
 
 fred_data_pivoted <- fred_data %>%
   pivot_longer(
@@ -160,29 +163,116 @@ The data import for the FRED data was simpler than the data import for the stock
 ```{r}
 ggplot(stock_close_month_pivoted,aes(x=date,y=price,color=stock)) +
   geom_line()
+
+stock_close_month_pivoted_data <- stock_close_month_pivoted %>%
+  group_by(stock) %>%
+  summarize(
+    min_price = min(price),
+    mean_price = mean(price),
+    median_price = median(price),
+    max_price = max(price),
+  )
+
+knitr::kable(stock_close_month_pivoted_data)
 ```
 
 ## Economic Data
 ### PPI (Construction Materials)
 ```{r}
-ggplot(fred_data,aes(x=observation_date,y=ppi_construction)) +
+ggplot(fred_data,aes(x=date,y=ppi_construction)) +
   geom_line()
+
+ppi_construction_data <- fred_data %>%
+  summarize(
+    min_ppi = min(ppi_construction),
+    mean_ppi = mean(ppi_construction),
+    median_ppi = median(ppi_construction),
+    max_ppi = max(ppi_construction),
+  )
+
+knitr::kable(ppi_construction_data)
 ```
 
 ### Residential Construction Spending
 ```{r}
-ggplot(fred_data,aes(x=observation_date,y=construction_spending)) +
+ggplot(fred_data,aes(x=date,y=construction_spending)) +
   geom_line()
+
+construction_spending_data <- fred_data %>%
+  summarize(
+    min_spending = min(construction_spending),
+    mean_spending = mean(construction_spending),
+    median_spending = median(construction_spending),
+    max_spending = max(construction_spending),
+  )
+
+knitr::kable(construction_spending_data)
 ```
 
 ### New Private Housing Units
 ```{r}
-ggplot(fred_data,aes(x=observation_date,y=new_private_units)) +
+ggplot(fred_data,aes(x=date,y=new_private_units)) +
   geom_line()
+
+new_private_units_data <- fred_data %>%
+  summarize(
+    min_new_units = min(new_private_units),
+    mean_new_units = mean(new_private_units),
+    median_new_units = median(new_private_units),
+    max_new_units = max(new_private_units),
+  )
+
+knitr::kable(new_private_units_data)
 ```
 
 ### New One Family Homes Sold
 ```{r}
-ggplot(fred_data,aes(x=observation_date,y=new_family_homes_sold)) +
+ggplot(fred_data,aes(x=date,y=new_family_homes_sold)) +
   geom_line()
+
+new_family_homes_sold_data <- fred_data %>%
+  summarize(
+    min_new_sold = min(new_family_homes_sold),
+    mean_new_sold = mean(new_family_homes_sold),
+    median_new_sold = median(new_family_homes_sold),
+    max_new_sold = max(new_family_homes_sold),
+  )
+
+knitr::kable(new_family_homes_sold_data)
+```
+
+# Research
+## Research Question
+
+To what extent does there exist a correlation between various economic metrics and publicly traded equities related to the US housing market?
+
+```{r}
+joined_stock_economic_data <- fred_data %>%
+  left_join(stock_close_month) %>%
+  select(
+    !(year:day)
+  )
+
+knitr::kable(joined_stock_economic_data %>% head())
+
+joined_stock_economic_data_pivoted <- joined_stock_economic_data %>%
+  pivot_longer(
+    cols = ppi_construction:OC,
+    names_to = "metric",
+    values_to = "value"
+  ) %>%
+  mutate(
+    type = case_when(
+      metric == "ppi_construction" | metric == "construction_spending" | metric == "new_private_units" | metric == "new_family_homes_sold" ~ "economy",
+      .default = "stock"
+    )
+  )
+
+knitr::kable(joined_stock_economic_data_pivoted %>% head())
+```
+
+```{r}
+ggplot(joined_stock_economic_data_pivoted,aes(x=date,y=metric)) +
+  geom_point() +
+  geom_smooth(method="lm")
 ```
