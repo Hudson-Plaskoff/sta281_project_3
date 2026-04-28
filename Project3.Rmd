@@ -12,6 +12,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 library(tidyverse)
 library(knitr)
+library(patchwork)
 use_virtualenv("~/.virtualenvs/r-reticulate",required=TRUE)
 ```
 
@@ -48,7 +49,7 @@ We decided to only look at data from January 1, 2007 and later due to not all of
 * [New One Family Houses Sold: United States](https://fred.stlouisfed.org/series/HSN1F)
   * Measures the total number of new one family homes sold (in thousands) 
 
-We don't anticipate that we will use all of these datasets, but we believe that it would be beneficial to have them imported and ready to use in case we needed one of them that we hadn't anticipated using. 
+We don't anticipate that we will use all of these datasets (stocks or economic data), but we believe that it would be beneficial to have them imported and ready to use in case we needed one of them that we hadn't anticipated using. 
 
 Across all of the FRED datasets, the sample size is 228, which in this context of monthly observations means the data is from a 228 month (19 year) period of time. The sample size for the stock data across all of the stocks chosen is also 228, meaning it is also across 228 months (or 19 years) in the same period of time as the FRED data.
 
@@ -271,8 +272,122 @@ joined_stock_economic_data_pivoted <- joined_stock_economic_data %>%
 knitr::kable(joined_stock_economic_data_pivoted %>% head())
 ```
 
+## D. R. Horton and Producer Price Index of Construction Materials
 ```{r}
-ggplot(joined_stock_economic_data_pivoted,aes(x=date,y=metric)) +
-  geom_point() +
-  geom_smooth(method="lm")
+coeff <- 2
+
+ggplot(joined_stock_economic_data,aes(x=date)) +
+  geom_line(aes(y=DHI),color="orange") + 
+  geom_line(aes(y=ppi_construction/coeff),color="blue") +
+  scale_y_continuous(
+    # First Axis
+    name = "D. R. Horton stock price",
+    # Second Axis
+    sec.axis = sec_axis(~.*coeff, name="PPI Construction")
+  ) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-11")), color = "red", linetype = "dashed", size = 1) +
+  annotate("rect", 
+           xmin = as.Date("2020-03-16"), 
+           xmax = as.Date("2022-03-16"), 
+           ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = "yellow") +
+  annotate("text", x=as.Date("2016-01-01"), y=175, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2023-05-01"), y=35, label= "Rates held near zero")
+
+dhr_by_ppi <- joined_stock_economic_data %>%
+  summarize(
+    correlation = cor(DHI,ppi_construction)
+  )
+
+knitr::kable(dhr_by_ppi)
+```
+
+## Masco and Residential Construction Spending
+```{r}
+coeff3 <- 10000
+
+ggplot(joined_stock_economic_data,aes(x=date)) +
+  geom_line(aes(y=MAS),color="orange") + 
+  geom_line(aes(y=construction_spending/coeff3),color="blue") +
+  scale_y_continuous(
+    # First Axis
+    name = "Masco stock price",
+    # Second Axis
+    sec.axis = sec_axis(~.*coeff3, name="Construction Spending")
+  ) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-11")), color = "red", linetype = "dashed", size = 1) +
+  annotate("rect", 
+           xmin = as.Date("2020-03-16"), 
+           xmax = as.Date("2022-03-16"), 
+           ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = "yellow") +
+  annotate("text", x=as.Date("2016-01-01"), y=100, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2023-05-01"), y=10, label= "Rates held near zero")
+
+mas_by_construction <- joined_stock_economic_data %>%
+  summarize(
+    correlation = cor(MAS,construction_spending)
+  )
+
+knitr::kable(mas_by_construction)
+```
+
+## Home Depot and New Private Housing Units Started
+```{r}
+coeff2 <- 10
+
+ggplot(joined_stock_economic_data,aes(x=date)) +
+  geom_line(aes(y=HD),color="orange") + 
+  geom_line(aes(y=new_private_units/coeff2),color="blue") +
+  scale_y_continuous(
+    # First Axis
+    name = "Home Depot stock price",
+    # Second Axis
+    sec.axis = sec_axis(~.*coeff2, name="New Private Units")
+  ) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-11")), color = "red", linetype = "dashed", size = 1) +
+  annotate("rect", 
+           xmin = as.Date("2020-03-16"), 
+           xmax = as.Date("2022-03-16"), 
+           ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = "yellow") +
+  annotate("text", x=as.Date("2016-01-01"), y=400, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2023-05-01"), y=70, label= "Rates held near zero")
+
+hd_by_new_units <- joined_stock_economic_data %>%
+  summarize(
+    correlation = cor(HD,new_private_units)
+  )
+
+knitr::kable(hd_by_new_units)
+```
+
+## Lowe's and New One Family Homes Sold
+```{r}
+coeff2 <- 5
+
+ggplot(joined_stock_economic_data,aes(x=date)) +
+  geom_line(aes(y=LOW),color="orange") + 
+  geom_line(aes(y=new_family_homes_sold/coeff2),color="blue") +
+  scale_y_continuous(
+    # First Axis
+    name = "Lowe's stock price",
+    # Second Axis
+    sec.axis = sec_axis(~.*coeff2, name="New Family Homes Sold")
+  ) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-03-11")), color = "red", linetype = "dashed", size = 1) +
+  annotate("rect", 
+           xmin = as.Date("2020-03-16"), 
+           xmax = as.Date("2022-03-16"), 
+           ymin = -Inf, ymax = Inf, 
+           alpha = 0.2, fill = "yellow") +
+  annotate("text", x=as.Date("2016-01-01"), y=400, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2023-05-01"), y=70, label= "Rates held near zero")
+
+hd_by_homes_sold <- joined_stock_economic_data %>%
+  summarize(
+    correlation = cor(BLDR,new_family_homes_sold)
+  )
+
+knitr::kable(hd_by_homes_sold)
 ```
