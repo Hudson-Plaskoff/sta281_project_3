@@ -177,6 +177,8 @@ stock_close_month_pivoted_data <- stock_close_month_pivoted %>%
 knitr::kable(stock_close_month_pivoted_data)
 ```
 
+Since 2007, all of the stocks we chose have increased in price. Because this is data over a time period and not a more standard comparison of observations, the mean and median represent the average stock price from 2007 to the present rather than the average prices of different stocks in a given group. Something to note is that companies with very small low's such as BLDR, DHI, LEN, MAS, OC, and PHM likely had stock splits after periods of growth, meaning that their stock price would have originally been the low price listed times whatever the ratio of the split was. In terms of the highest prices at the end of this period, Home Depot (HD) is the highest and Masco (MAS) is the lowest.
+
 ## Economic Data
 ### PPI (Construction Materials)
 ```{r}
@@ -194,6 +196,8 @@ ppi_construction_data <- fred_data %>%
 knitr::kable(ppi_construction_data)
 ```
 
+The PPI of construction materials shows a sharp increase in late 2020 and early 2021, which is roughly the same time when inflation in the US began to spike in the initial aftermath of the COVID-19 pandemic. While it didn't continue to increase, it has remained at a higher baseline level since this initial rise
+
 ### Residential Construction Spending
 ```{r}
 ggplot(fred_data,aes(x=date,y=construction_spending)) +
@@ -209,6 +213,8 @@ construction_spending_data <- fred_data %>%
 
 knitr::kable(construction_spending_data)
 ```
+
+Similarly to the PPI of construction materials, the level of residential construction spending increased in the same time. This is not because of inflation, but instead because of low interest rates which allowed construction companies to borrow at a more affordable rate, in turn leading to higher profitability on construction projects. These low interest rates also contributed to the inflation discussed above with PPI for construction materials.
 
 ### New Private Housing Units
 ```{r}
@@ -226,6 +232,8 @@ new_private_units_data <- fred_data %>%
 knitr::kable(new_private_units_data)
 ```
 
+The sharp decrease in new homes being built in early 2020 was likely due to the fear of decreased imports of construction materials in the first few months of the COVID-19 pandemic. However, the increase immediately thereafter was likely due to these fears being offset by the aforementioned lower interest rates, which then allowed for the number of new homes being built to increase past pre-COVID levels until early 2023. Notably, the sharp decrease in 2007 and 2008 (in both this and in residential construction spending) is almost certainly related to the collapse of the housing bubble in these years and the subsequent recession.
+
 ### New One Family Homes Sold
 ```{r}
 ggplot(fred_data,aes(x=date,y=new_family_homes_sold)) +
@@ -242,10 +250,14 @@ new_family_homes_sold_data <- fred_data %>%
 knitr::kable(new_family_homes_sold_data)
 ```
 
+Similar to many of the economic metrics examined above, the amount of new homes sold had a sharp decrease in 2007 and 2008, followed by a noticeable decrease then increase in 2020 as the COVID-19 pandemic began. The decline in 2023 is likely due to the increase in interest rates from near zero to higher levels. 
+
 # Research
 ## Research Question
 
-To what extent does there exist a correlation between various economic metrics and publicly traded equities related to the US housing market?
+The question we decided to examine is this:
+
+  To what extent does there exist a correlation between various economic metrics and publicly traded equities related to the US housing market?
 
 ```{r}
 joined_stock_economic_data <- fred_data %>%
@@ -268,8 +280,6 @@ joined_stock_economic_data_pivoted <- joined_stock_economic_data %>%
       .default = "stock"
     )
   )
-
-knitr::kable(joined_stock_economic_data_pivoted %>% head())
 ```
 
 ## D. R. Horton and Producer Price Index of Construction Materials
@@ -294,24 +304,31 @@ ggplot(joined_stock_economic_data,aes(x=date)) +
   annotate("text", x=as.Date("2016-01-01"), y=175, label= "COVID pandemic declared") +
   annotate("text", x=as.Date("2023-05-01"), y=35, label= "Rates held near zero")
 
-dhr_by_ppi <- joined_stock_economic_data %>%
+stocks_by_ppi <- joined_stock_economic_data %>%
   summarize(
-    correlation = cor(DHI,ppi_construction)
+    HD_cor = cor(HD,ppi_construction),
+    LOW_cor = cor(LOW,ppi_construction),
+    DHI_cor = cor(DHI,ppi_construction),
+    PHM_cor = cor(PHM,ppi_construction),
+    LEN_cor = cor(LEN,ppi_construction),
+    MAS_cor = cor(MAS,ppi_construction),
+    BLDR_cor = cor(BLDR,ppi_construction),
+    OC_cor = cor(OC,ppi_construction),
   )
 
-knitr::kable(dhr_by_ppi)
+knitr::kable(stocks_by_ppi)
 ```
 
-## Masco and Residential Construction Spending
+## Home Depot and Residential Construction Spending
 ```{r}
 coeff3 <- 10000
 
 ggplot(joined_stock_economic_data,aes(x=date)) +
-  geom_line(aes(y=MAS),color="orange") + 
+  geom_line(aes(y=HD),color="orange") + 
   geom_line(aes(y=construction_spending/coeff3),color="blue") +
   scale_y_continuous(
     # First Axis
-    name = "Masco stock price",
+    name = "Home Depot stock price",
     # Second Axis
     sec.axis = sec_axis(~.*coeff3, name="Construction Spending")
   ) +
@@ -321,27 +338,34 @@ ggplot(joined_stock_economic_data,aes(x=date)) +
            xmax = as.Date("2022-03-16"), 
            ymin = -Inf, ymax = Inf, 
            alpha = 0.2, fill = "yellow") +
-  annotate("text", x=as.Date("2016-01-01"), y=100, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2016-01-01"), y=300, label= "COVID pandemic declared") +
   annotate("text", x=as.Date("2023-05-01"), y=10, label= "Rates held near zero")
 
-mas_by_construction <- joined_stock_economic_data %>%
+stocks_by_construction <- joined_stock_economic_data %>%
   summarize(
-    correlation = cor(MAS,construction_spending)
+    HD_cor = cor(HD,construction_spending),
+    LOW_cor = cor(LOW,construction_spending),
+    DHI_cor = cor(DHI,construction_spending),
+    PHM_cor = cor(PHM,construction_spending),
+    LEN_cor = cor(LEN,construction_spending),
+    MAS_cor = cor(MAS,construction_spending),
+    BLDR_cor = cor(BLDR,construction_spending),
+    OC_cor = cor(OC,construction_spending),
   )
 
-knitr::kable(mas_by_construction)
+knitr::kable(stocks_by_construction)
 ```
 
-## Home Depot and New Private Housing Units Started
+## Masco and New Private Housing Units Started
 ```{r}
 coeff2 <- 10
 
 ggplot(joined_stock_economic_data,aes(x=date)) +
-  geom_line(aes(y=HD),color="orange") + 
+  geom_line(aes(y=MAS),color="orange") + 
   geom_line(aes(y=new_private_units/coeff2),color="blue") +
   scale_y_continuous(
     # First Axis
-    name = "Home Depot stock price",
+    name = "Masco stock price",
     # Second Axis
     sec.axis = sec_axis(~.*coeff2, name="New Private Units")
   ) +
@@ -351,15 +375,22 @@ ggplot(joined_stock_economic_data,aes(x=date)) +
            xmax = as.Date("2022-03-16"), 
            ymin = -Inf, ymax = Inf, 
            alpha = 0.2, fill = "yellow") +
-  annotate("text", x=as.Date("2016-01-01"), y=400, label= "COVID pandemic declared") +
-  annotate("text", x=as.Date("2023-05-01"), y=70, label= "Rates held near zero")
+  annotate("text", x=as.Date("2016-01-01"), y=200, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2023-05-01"), y=15, label= "Rates held near zero")
 
-hd_by_new_units <- joined_stock_economic_data %>%
+stocks_by_new_units <- joined_stock_economic_data %>%
   summarize(
-    correlation = cor(HD,new_private_units)
+    HD_cor = cor(HD,new_private_units),
+    LOW_cor = cor(LOW,new_private_units),
+    DHI_cor = cor(DHI,new_private_units),
+    PHM_cor = cor(PHM,new_private_units),
+    LEN_cor = cor(LEN,new_private_units),
+    MAS_cor = cor(MAS,new_private_units),
+    BLDR_cor = cor(BLDR,new_private_units),
+    OC_cor = cor(OC,new_private_units),
   )
 
-knitr::kable(hd_by_new_units)
+knitr::kable(stocks_by_new_units)
 ```
 
 ## Lowe's and New One Family Homes Sold
@@ -381,13 +412,20 @@ ggplot(joined_stock_economic_data,aes(x=date)) +
            xmax = as.Date("2022-03-16"), 
            ymin = -Inf, ymax = Inf, 
            alpha = 0.2, fill = "yellow") +
-  annotate("text", x=as.Date("2016-01-01"), y=400, label= "COVID pandemic declared") +
+  annotate("text", x=as.Date("2016-01-01"), y=250, label= "COVID pandemic declared") +
   annotate("text", x=as.Date("2023-05-01"), y=70, label= "Rates held near zero")
 
-hd_by_homes_sold <- joined_stock_economic_data %>%
+stocks_by_new_homes <- joined_stock_economic_data %>%
   summarize(
-    correlation = cor(BLDR,new_family_homes_sold)
+    HD_cor = cor(HD,new_family_homes_sold),
+    LOW_cor = cor(LOW,new_family_homes_sold),
+    DHI_cor = cor(DHI,new_family_homes_sold),
+    PHM_cor = cor(PHM,new_family_homes_sold),
+    LEN_cor = cor(LEN,new_family_homes_sold),
+    MAS_cor = cor(MAS,new_family_homes_sold),
+    BLDR_cor = cor(BLDR,new_family_homes_sold),
+    OC_cor = cor(OC,new_family_homes_sold),
   )
 
-knitr::kable(hd_by_homes_sold)
+knitr::kable(stocks_by_new_homes)
 ```
