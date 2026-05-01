@@ -257,7 +257,7 @@ Similar to many of the economic metrics examined above, the amount of new homes 
 
 The question we decided to examine is this:
 
-  To what extent does there exist a correlation between various economic metrics and publicly traded equities related to the US housing market?
+To what extent does there exist a correlation between various economic metrics and publicly traded equities related to the US housing market?
 
 ```{r}
 joined_stock_economic_data <- fred_data %>%
@@ -319,9 +319,13 @@ stocks_by_ppi <- joined_stock_economic_data %>%
 knitr::kable(stocks_by_ppi)
 ```
 
+All of the stocks chosen have a strong positive correlation with the PPI of construction materials, meaning the value of these companies increased as the PPI of construction materials also increased. Of the companies, the strongest correlations were with Home Depot and Lowe's, both of which are home improvement retail companies. However, these correlations being stronger than those of other companies are relative, as all of the stocks chosen still had very high correlations.
+
+D. R. Horton was chosen in this graph to show similar points between a stock's price and an economic metric. Both show an increase in early 2021 as rates remained low, but they diverge in 2023 as rates were raised. After this point in 2023, the PPI of construction materials have remained relatively flat but still elevated, while D. R. Horton's stock has continued to increase.
+
 ## Home Depot and Residential Construction Spending
 ```{r}
-coeff3 <- 10000
+coeff3 <- 5000
 
 ggplot(joined_stock_economic_data,aes(x=date)) +
   geom_line(aes(y=HD),color="orange") + 
@@ -355,6 +359,10 @@ stocks_by_construction <- joined_stock_economic_data %>%
 
 knitr::kable(stocks_by_construction)
 ```
+
+All of the stocks chosen have a very positive correlation with the amount of residential construction spending, meaning the value of these companies increased as the level of residential construction spending in the US increased. Of the companies, the strongest correlations were with Home Depot, Lowe's, and Masco, but again these correlations being stronger than others are only in relative terms, as all of the stocks chosen still had very high correlations.
+
+Home Depot was chosen for this graph to show similar changes for a stock price and an economic metric. In a very similar way to D.R. Horton and the PPI of construction materials above, the graph of Home Depot and the level of residential construction spending follows similar trends, with increases in both values in 2021 as inflation increased and rates remained low, followed by continued rise in a stock price afterward and the level of construction spending remaining flat at the same time.
 
 ## Masco and New Private Housing Units Started
 ```{r}
