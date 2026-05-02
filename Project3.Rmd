@@ -7,7 +7,7 @@ output:
     code_folding: hide
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(reticulate)
 library(tidyverse)
@@ -67,7 +67,7 @@ stock_data = yf.download(tickers,start=start,end=end)
 stock_close = stock_data["Close"]
 ```
 
-```{r}
+```{r message=FALSE}
 stock_close <- py$stock_close
 
 stock_close <- stock_close %>%
@@ -118,7 +118,7 @@ We used the yfinance library in Python to easily access stock data from Yahoo Fi
 
 ## Economic Data from FRED
 
-```{r}
+```{r message=FALSE}
 ppi_construction <- read_csv("WPUSI012011.csv") %>%
   rename(
     ppi_construction = WPUSI012011
@@ -161,7 +161,7 @@ The data import for the FRED data was simpler than the data import for the stock
 
 # Exploratory Data Analysis
 ## Stock Prices
-```{r}
+```{r message=FALSE}
 ggplot(stock_close_month_pivoted,aes(x=date,y=price,color=stock)) +
   geom_line()
 
@@ -181,7 +181,7 @@ Since 2007, all of the stocks we chose have increased in price. Because this is 
 
 ## Economic Data
 ### PPI (Construction Materials)
-```{r}
+```{r message=FALSE}
 ggplot(fred_data,aes(x=date,y=ppi_construction)) +
   geom_line()
 
@@ -199,7 +199,7 @@ knitr::kable(ppi_construction_data)
 The PPI of construction materials shows a sharp increase in late 2020 and early 2021, which is roughly the same time when inflation in the US began to spike in the initial aftermath of the COVID-19 pandemic. While it didn't continue to increase, it has remained at a higher baseline level since this initial rise
 
 ### Residential Construction Spending
-```{r}
+```{r message=FALSE}
 ggplot(fred_data,aes(x=date,y=construction_spending)) +
   geom_line()
 
@@ -217,7 +217,7 @@ knitr::kable(construction_spending_data)
 Similarly to the PPI of construction materials, the level of residential construction spending increased in the same time. This is not because of inflation, but instead because of low interest rates which allowed construction companies to borrow at a more affordable rate, in turn leading to higher profitability on construction projects. These low interest rates also contributed to the inflation discussed above with PPI for construction materials.
 
 ### New Private Housing Units
-```{r}
+```{r message=FALSE}
 ggplot(fred_data,aes(x=date,y=new_private_units)) +
   geom_line()
 
@@ -235,7 +235,7 @@ knitr::kable(new_private_units_data)
 The sharp decrease in new homes being built in early 2020 was likely due to the fear of decreased imports of construction materials in the first few months of the COVID-19 pandemic. However, the increase immediately thereafter was likely due to these fears being offset by the aforementioned lower interest rates, which then allowed for the number of new homes being built to increase past pre-COVID levels until early 2023. Notably, the sharp decrease in 2007 and 2008 (in both this and in residential construction spending) is almost certainly related to the collapse of the housing bubble in these years and the subsequent recession.
 
 ### New One Family Homes Sold
-```{r}
+```{r message=FALSE}
 ggplot(fred_data,aes(x=date,y=new_family_homes_sold)) +
   geom_line()
 
@@ -259,7 +259,7 @@ The question we decided to examine is this:
 
 To what extent does there exist a correlation between various economic metrics and publicly traded equities related to the US housing market?
 
-```{r}
+```{r message=FALSE}
 joined_stock_economic_data <- fred_data %>%
   left_join(stock_close_month) %>%
   select(
@@ -444,4 +444,6 @@ Similar to the metric of new homes that started construction, the number of new 
 
 # Conclusion
 
-TEST
+According to our analysis of these four economic metrics against our selected stocks, we observed a higher positive correlation between these stocks and the metrics of PPI of construction materials and the amount of residential spending than the correlation with the other metrics of new housing units started and new homes sold. One reason for this is because metrics such as PPI specifically generally only increase over time, as prices of materials typically are only pushed upwards, whereas metrics such as homes that have began construction or homes that have been sold typically wax and wane between a given range over time rather than simply increasing or decreasing.
+
+Something else we observed was that Builders FirstSource and Owens Corning, both of which are building products and equipment firms, generally had the lowest correlations across all metrics. However, Masco, which is also a firm that sells building products and equipment, generally had some of the highest correlations across all of the metrics. Future research could look into why exactly this is between by comparing the three companies in greater detail.
