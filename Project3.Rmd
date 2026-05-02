@@ -313,7 +313,7 @@ stocks_by_ppi <- joined_stock_economic_data %>%
     LEN_cor = cor(LEN,ppi_construction),
     MAS_cor = cor(MAS,ppi_construction),
     BLDR_cor = cor(BLDR,ppi_construction),
-    OC_cor = cor(OC,ppi_construction),
+    OC_cor = cor(OC,ppi_construction)
   )
 
 knitr::kable(stocks_by_ppi)
@@ -354,7 +354,7 @@ stocks_by_construction <- joined_stock_economic_data %>%
     LEN_cor = cor(LEN,construction_spending),
     MAS_cor = cor(MAS,construction_spending),
     BLDR_cor = cor(BLDR,construction_spending),
-    OC_cor = cor(OC,construction_spending),
+    OC_cor = cor(OC,construction_spending)
   )
 
 knitr::kable(stocks_by_construction)
@@ -395,11 +395,13 @@ stocks_by_new_units <- joined_stock_economic_data %>%
     LEN_cor = cor(LEN,new_private_units),
     MAS_cor = cor(MAS,new_private_units),
     BLDR_cor = cor(BLDR,new_private_units),
-    OC_cor = cor(OC,new_private_units),
+    OC_cor = cor(OC,new_private_units)
   )
 
 knitr::kable(stocks_by_new_units)
 ```
+
+While all of the chosen stocks do have a positive correlation with the number of new private housing units that began construction, they are not as strong as the correlations observed previously with both the PPI of construction materials and construction spending. Despite mostly following the same trends in the COVID-19 pandemic and afterward, what appears to differentiate this metric from those observed previously is a much sharper decline during the 2007-2008 financial crisis that it only recovered from directly before the pandemic.
 
 ## Lowe's and New One Family Homes Sold
 ```{r}
@@ -432,8 +434,10 @@ stocks_by_new_homes <- joined_stock_economic_data %>%
     LEN_cor = cor(LEN,new_family_homes_sold),
     MAS_cor = cor(MAS,new_family_homes_sold),
     BLDR_cor = cor(BLDR,new_family_homes_sold),
-    OC_cor = cor(OC,new_family_homes_sold),
+    OC_cor = cor(OC,new_family_homes_sold)
   )
 
 knitr::kable(stocks_by_new_homes)
 ```
+
+Similar to the metric of new homes that started construction, the number of new homes sold also had a much sharper decrease relative to PPI of construction materials and construction spending, meaning it also has a lower, although still positive, correlation with all of the chosen stocks. However, the chosen stock of Lowe's did also mirror some key moments that reoccurred in other metrics, such as volatility after the beginning of the COVID-19 pandemic and a decrease during 2008.
