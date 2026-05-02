@@ -441,3 +441,7 @@ knitr::kable(stocks_by_new_homes)
 ```
 
 Similar to the metric of new homes that started construction, the number of new homes sold also had a much sharper decrease relative to PPI of construction materials and construction spending, meaning it also has a lower, although still positive, correlation with all of the chosen stocks. However, the chosen stock of Lowe's did also mirror some key moments that reoccurred in other metrics, such as volatility after the beginning of the COVID-19 pandemic and a decrease during 2008.
+
+# Conclusion
+
+TEST
